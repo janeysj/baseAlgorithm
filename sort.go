@@ -44,16 +44,21 @@ func heapsort(data []int, a, b int) {
 func siftDown(data []int, lo, hi, first int) {
 	root := lo
 	for {
+		// child is the index of root's left child.
 		child := 2*root + 1
+		// if the child index is out of tree range, break.
 		if child >= hi {
 			break
 		}
+		// if the right child index is still in the tree range, compare the left child and the right child
 		if child+1 < hi && data[first+child] < data[first+child+1] {
-			child++
+			child++// if the left child is less than the right child, point to the right child else still point the left child
 		}
+		// if the root is not less than the bigger child, return
 		if !(data[first+root] < data[first+child]) {
 			return
 		}
+		// Swap the bigger child and the root, which may be right child or left child.
 		data[first+root], data[first+child] = data[first+child], data[first+root]
 		root = child
 	}
