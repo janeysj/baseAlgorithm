@@ -17,7 +17,7 @@ type List struct {
 	tail unsafe.Pointer
 }
 
-func ListNew() (*List) {
+func ListNew() *List {
 	l := new(List)
 	tailnode := (unsafe.Pointer)(&ListNode{nextnode: nil, value: nil})
 	headnode := (unsafe.Pointer)(&ListNode{nextnode: tailnode, value: nil})

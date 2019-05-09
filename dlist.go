@@ -20,7 +20,7 @@ type DList struct {
 	tail *ListNode
 }
 
-func DListNew() (*DList) {
+func DListNew() *DList {
 	l := new(DList)
 	headnode := new(ListNode)
 	tailnode := new(ListNode)

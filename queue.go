@@ -1,10 +1,10 @@
 package main
 
 import (
-	"unsafe"
-	"sync/atomic"
-	"runtime"
 	"fmt"
+	"runtime"
+	"sync/atomic"
+	"unsafe"
 )
 
 // lock free queue
@@ -12,7 +12,7 @@ type Queue struct {
 	head  unsafe.Pointer
 	tail  unsafe.Pointer
 	Reset func(interface{})
-	New func() interface{}
+	New   func() interface{}
 }
 
 // one node in queue
@@ -21,9 +21,9 @@ type Node struct {
 	next unsafe.Pointer
 }
 
-func QueueNew()(*Queue){
+func QueueNew() *Queue {
 	queue := new(Queue)
-	queue.head =  unsafe.Pointer(new(Node))
+	queue.head = unsafe.Pointer(new(Node))
 	queue.tail = queue.head
 	return queue
 }
@@ -31,7 +31,7 @@ func QueueNew()(*Queue){
 // queue functions
 func (self *Queue) EnQueue(val interface{}) {
 
-	if self.Reset!= nil{
+	if self.Reset != nil {
 		self.Reset(val)
 	}
 	newNode := unsafe.Pointer(&Node{val: val, next: nil})
@@ -39,7 +39,7 @@ func (self *Queue) EnQueue(val interface{}) {
 	for {
 		tail = self.tail
 		next = ((*Node)(tail)).next
-		if tail != self.tail{
+		if tail != self.tail {
 			runtime.Gosched()
 			continue
 		}
@@ -47,12 +47,12 @@ func (self *Queue) EnQueue(val interface{}) {
 			atomic.CompareAndSwapPointer(&(self.tail), tail, next)
 			continue
 		}
-		if atomic.CompareAndSwapPointer(&((*Node)(tail).next), nil,newNode ) {
-		    break
+		if atomic.CompareAndSwapPointer(&((*Node)(tail).next), nil, newNode) {
+			break
 		}
 		runtime.Gosched()
 	}
-	atomic.CompareAndSwapPointer(&(self.tail),tail, newNode)
+	atomic.CompareAndSwapPointer(&(self.tail), tail, newNode)
 }
 
 func (self *Queue) DeQueue() (val interface{}) {
@@ -61,25 +61,25 @@ func (self *Queue) DeQueue() (val interface{}) {
 		head = self.head
 		tail = self.tail
 		next = ((*Node)(head)).next
-		if head != self.head{
+		if head != self.head {
 			runtime.Gosched()
 			continue
 		}
-		if next == nil{
-			if self.New != nil{
+		if next == nil {
+			if self.New != nil {
 				return self.New()
-			}else{
+			} else {
 				return nil
 			}
 
 		}
 		if head == tail {
 			atomic.CompareAndSwapPointer(&(self.tail), tail, next)
-		}else{
+		} else {
 			val = ((*Node)(next)).val
 			if atomic.CompareAndSwapPointer(&(self.head), head, next) {
 				return val
-		    	}
+			}
 		}
 		runtime.Gosched()
 	}
@@ -96,7 +96,7 @@ func (self *Queue) Print() {
 	fmt.Printf("\n")
 }
 
-func main()  {
+func main() {
 	q := QueueNew()
 	q.EnQueue(5)
 	q.EnQueue(8)
