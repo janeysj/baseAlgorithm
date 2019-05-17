@@ -10,9 +10,9 @@ func main() {
 
 	fmt.Printf("Original a is %v\n", a)
 	// bubblesort(a)
-	// insertsort(a)
+	insertsort(a)
 	// quicksort(a)
-	heapsort(a, 0, len(a))
+	// heapsort(a, 0, len(a))
 	fmt.Printf("Sorted a is %v\n", a)
 }
 
@@ -121,7 +121,7 @@ func insertsort(a []int) {
 		temp := a[i]
 		j := i
 		for ; j >= 1 && temp < a[j-1]; j-- {
-			fmt.Printf("a[%d] %d is less than a[%d] %d\n", i, temp, j, a[j])
+			fmt.Printf("a[%d] %d is less than a[%d] %d\n", i, temp, j, a[j-1])
 			a[j] = a[j-1]
 			fmt.Println(a)
 		}

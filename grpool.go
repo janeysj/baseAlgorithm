@@ -27,6 +27,8 @@ type Pool struct {
 	// workers is a slice that store the available workers.
 	workers []*Worker
 
+	workerCache sync.Pool
+
 	// I donot know how to use this chan var
 	// freeSignal chan sig
 
@@ -56,12 +58,16 @@ func (p *Pool) getWorker() *Worker{
 	n := len(workers) - 1
 	// log.Printf("n is %d", n)
 	if n < 0 {
+		// 没有空闲worker
 		if p.running >= p.capacity {
+			// 并且工作的worker已达上限，只能等�
 			waiting = true
 		} else {
-			p.running++
+			// 但是工作的worker未达上限，可以创建一个新的worker进行工作
+			// p.running++
 		}
 	} else {
+		// 有空闲worker，从队列尾部取出一个使�
 		w = workers[n]
 		workers[n] =  nil
 		p.workers = workers[:n]
@@ -84,10 +90,15 @@ func (p *Pool) getWorker() *Worker{
 			p.lock.Unlock()
 			break
 		}
-	} else if w == nil {
-		w = &Worker{
-			pool: p,
-			task: make(chan func()),
+	} else {
+		if cacheWorker := p.workerCache.Get(); cacheWorker != nil {
+			log.Printf("Get cacheworker!!!!")
+			w = cacheWorker.(*Worker)
+		} else {
+			w = &Worker{
+				pool: p,
+				task: make(chan func()),
+			}
 		}
 		w.run()
 	}
@@ -121,10 +132,19 @@ type Worker struct {
 }
 
 func (w *Worker) run() {
+	atomic.AddInt32(&w.pool.running, 1)
 	go func() {
+		defer func() {
+			if p := recover(); p != nil {
+				atomic.AddInt32(&w.pool.running, -1)
+				w.pool.workerCache.Put(w)				
+			}
+		}()
+
 		for f := range w.task {
 			if f == nil {
 				atomic.AddInt32(&w.pool.running, -1)
+				w.pool.workerCache.Put(w)
 			}
 			f()
 			w.pool.putWorker(w)
@@ -142,7 +162,7 @@ func demoFunc() {
 }
 func main() {
 	size := 10
-	runtimes := 50
+	runtimes := 500
 	var wg sync.WaitGroup
 	pool,_ := NewPool(int32(size))
 	dfun := func() {
